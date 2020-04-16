@@ -6,17 +6,20 @@
 #
 # Description:
 #   An open-source Remote Desktop Protocol server.
+#
+# Sources:
+#   https://c-nergy.be/blog/?p=13655
+#
 
-- name: "Enable source files"
+- name: "Enable source repositories"
   replace:
     path: /etc/apt/sources.list
     regexp: '# deb-src'
     replace: 'deb-src'
 
-- name: "Refresh repo"
+- name: "Update repositories cache"
   apt:
     update_cache: yes
-
 
 - name: "Install packages"
   apt:
@@ -24,33 +27,62 @@
     state: present
   vars:
     packages:
+    - git 
+    - libpulse-dev 
+    - autoconf
+    - m4
+    - intltool
     - build-essential
     - dpkg-dev
-    - pulseaudio
-    - libpulse-dev
 
-- name: "Ensure the package build dependencies are installed."
+- name: "Ensure the package build dependencies are installed"
   apt:
     pkg: pulseaudio
     state: build-dep
 
-- name: "Download sources"
+- name: "Download pulseaudio source in /tmp directory"
   command: apt source pulseaudio
-
-- name: "Build pulse audio modules"
-  command: ./configure
   args:
-    chdir: pulseaudio-11.1/
+    chdir: /tmp
+
+- name: "Discover Directory"
+  shell: "pulseaudio --version | awk '{print $2}'"
+  register: pulseversion
+
+- name: "Display pulseaudio version"
+  debug:
+    var: pulseversion.stdout
+   
+- name: "Compile"
+  command: ./configure
+  args: 
+    chdir: /tmp/pulseaudio-{{ pulseversion.stdout }}
 
 - name: "Clone repository from git"
   git:
     repo: https://github.com/neutrinolabs/pulseaudio-module-xrdp.git
-    dest: pulseaudio-module-xrdp/    
+    dest: /tmp/pulseaudio-{{ pulseversion.stdout }}/pulseaudio-module-xrdp/    
 
-- name: "Install pulse audio module"
-  command: ./bootstrap && ./configure PULSE_DIR=/home/ansible/pulseaudio-11.1/ ; make
-  args:
-    chdir: pulseaudio-module-xrdp/
+- name: "Create xrdp sound modules"
+  shell:
+    cmd: "{{ item }}"
+    chdir: /tmp/pulseaudio-{{ pulseversion.stdout }}/pulseaudio-module-xrdp/
+  with_items:
+    - ./bootstrap
+    - ./configure PULSE_DIR="/home/ansible/pulseaudio-{{ pulseversion.stdout }}"
+    - make
 
-#- name: "Transfer files to the correct location"
-  
+- name: "Transfer files to the correct location"
+  shell:
+    cmd: install -t "/var/lib/xrdp-pulseaudio-installer" -D -m 644 *.so
+    chdir: /tmp/pulseaudio-{{ pulseversion.stdout }}/pulseaudio-module-xrdp/src/.libs/
+
+- name: "Disable  source repositories"
+  replace:
+    path: /etc/apt/sources.list
+    regexp: 'deb-src'
+    replace: '# deb-src'
+
+- name: "Update repositories cache"
+  apt:
+    update_cache: yes
