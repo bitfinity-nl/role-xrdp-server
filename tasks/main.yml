@@ -1,0 +1,42 @@
+---
+# Title: role-xrdp-server
+#
+# Author: Bitfinity-NL
+# File: tasks/main.yml
+#
+# Description:
+#   An open-source Remote Desktop Protocol server.
+
+- name: "Install packages"
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - xfce4
+    - xfce4-goodies
+    - xorg
+    - dbus-x11 
+    - x11-xserver-utils
+    - xrdp
+    - xorgxrdp
+
+- name: "Add user xrdp to group ssl-cert"
+  user:
+    name: xrdp
+    groups: ssl-cert
+
+- name: "Enable and start service"
+  systemd:
+    name: xrdp
+    state: started
+    enabled: yes
+
+- name: "Allow RDP traffic on port 3389/tcp"
+  ufw:
+    rule: allow
+    port: '3389'
+    proto: tcp 
+
+- name: "Install audio" 
+  import_tasks: xrdp-pulse-audio.yml

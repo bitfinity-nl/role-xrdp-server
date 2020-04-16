@@ -1,0 +1,56 @@
+---
+# Title: role-xrdp-server
+#
+# Author: Bitfinity-NL
+# File: tasks/xrdp-pulse-audio.yml
+#
+# Description:
+#   An open-source Remote Desktop Protocol server.
+
+- name: "Enable source files"
+  replace:
+    path: /etc/apt/sources.list
+    regexp: '# deb-src'
+    replace: 'deb-src'
+
+- name: "Refresh repo"
+  apt:
+    update_cache: yes
+
+
+- name: "Install packages"
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - build-essential
+    - dpkg-dev
+    - pulseaudio
+    - libpulse-dev
+
+- name: "Ensure the package build dependencies are installed."
+  apt:
+    pkg: pulseaudio
+    state: build-dep
+
+- name: "Download sources"
+  command: apt source pulseaudio
+
+- name: "Build pulse audio modules"
+  command: ./configure
+  args:
+    chdir: pulseaudio-11.1/
+
+- name: "Clone repository from git"
+  git:
+    repo: https://github.com/neutrinolabs/pulseaudio-module-xrdp.git
+    dest: pulseaudio-module-xrdp/    
+
+- name: "Install pulse audio module"
+  command: ./bootstrap && ./configure PULSE_DIR=/home/ansible/pulseaudio-11.1/ ; make
+  args:
+    chdir: pulseaudio-module-xrdp/
+
+#- name: "Transfer files to the correct location"
+  
