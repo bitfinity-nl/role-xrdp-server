@@ -69,7 +69,7 @@
     chdir: /tmp/pulseaudio-{{ pulseversion.stdout }}/pulseaudio-module-xrdp/
   with_items:
     - sudo ./bootstrap
-    - sudo ./configure PULSE_DIR="/home/ansible/pulseaudio-{{ pulseversion.stdout }}"
+    - sudo ./configure PULSE_DIR=" /tmp/pulseaudio-{{ pulseversion.stdout }}"
     - sudo make
 
 - name: "Transfer files to the correct location"
