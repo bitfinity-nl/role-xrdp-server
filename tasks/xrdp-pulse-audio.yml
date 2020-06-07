@@ -68,9 +68,9 @@
     cmd: "{{ item }}"
     chdir: /tmp/pulseaudio-{{ pulseversion.stdout }}/pulseaudio-module-xrdp/
   with_items:
-    - ./bootstrap
-    - ./configure PULSE_DIR="/home/ansible/pulseaudio-{{ pulseversion.stdout }}"
-    - make
+    - sudo ./bootstrap
+    - sudo ./configure PULSE_DIR="/home/ansible/pulseaudio-{{ pulseversion.stdout }}"
+    - sudo make
 
 - name: "Transfer files to the correct location"
   shell:
