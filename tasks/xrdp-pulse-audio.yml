@@ -68,7 +68,7 @@
     cmd: "{{ item }}"
     chdir: /tmp/pulseaudio-{{ pulseversion.stdout }}/pulseaudio-module-xrdp/
   with_items:
-    - ./bootstrap
+    - ./bootstrap.sh
     - ./configure PULSE_DIR="/home/ansible/pulseaudio-{{ pulseversion.stdout }}"
     - make
 
